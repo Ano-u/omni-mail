@@ -1,0 +1,118 @@
+import { AtSign, Check, ChevronDown, Cloud, Copy, Inbox, Settings2, X } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import type { ICloudAccount, ICloudAlias } from '../lib/api'
+import { t } from '../lib/i18n'
+
+export function ICloudScopeSwitcher({
+  accounts,
+  aliases,
+  selectedAccountId,
+  selectedAlias,
+  onAccountChange,
+  onAliasChange,
+  onAliasCopy,
+  onAccountSettings,
+}: {
+  accounts: ICloudAccount[]
+  aliases: ICloudAlias[]
+  selectedAccountId: string
+  selectedAlias: string
+  onAccountChange: (id: string) => void
+  onAliasChange: (address: string) => void
+  onAliasCopy: (address: string) => Promise<void>
+  onAccountSettings: (account: ICloudAccount) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const trigger = useRef<HTMLButtonElement>(null)
+  const panel = useRef<HTMLDivElement>(null)
+  const account = accounts.find((item) => item.id === selectedAccountId)
+
+  useEffect(() => {
+    if (!open) return
+    requestAnimationFrame(() => panel.current?.focus())
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return
+      event.preventDefault()
+      setOpen(false)
+      requestAnimationFrame(() => trigger.current?.focus())
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  }, [open])
+
+  function close() {
+    setOpen(false)
+    requestAnimationFrame(() => trigger.current?.focus())
+  }
+
+  return (
+    <div className="icloud-scope-switcher">
+      <button ref={trigger} className="icloud-scope-trigger" type="button"
+        aria-haspopup="dialog" aria-expanded={open} onClick={() => setOpen((value) => !value)}>
+        <span>{t('当前 iCloud')}</span>
+        <strong>{account?.name || t('选择账号')}</strong>
+        <ChevronDown size={14} aria-hidden="true" />
+      </button>
+      {open && <>
+        <button className="icloud-scope-backdrop" type="button" tabIndex={-1}
+          aria-hidden="true" onClick={close} />
+        <div ref={panel} className="icloud-scope-panel" role="dialog" aria-modal="true"
+          aria-labelledby="icloud-scope-title" tabIndex={-1}>
+          <header>
+            <div><small>ICLOUD SCOPE</small><h2 id="icloud-scope-title">{t('选择查看范围')}</h2></div>
+            <button className="icon-button icon-button--small" type="button" onClick={close}
+              aria-label={t('关闭')}><X size={16} /></button>
+          </header>
+          <div className="icloud-scope-content">
+            <section>
+              <h3>{t('iCloud 账号')}</h3>
+              {accounts.map((item) => (
+                <div className={`icloud-scope-account${item.id === selectedAccountId ? ' is-selected' : ''}`}
+                  key={item.id}>
+                  <button className="icloud-scope-option" type="button"
+                    onClick={() => { onAccountChange(item.id); close() }}>
+                    <span className="icloud-scope-icon"><Cloud size={16} /></span>
+                    <span><strong>{item.name}</strong><small>{item.realEmail || item.icloudEmail || t('尚未识别 Apple ID')}</small></span>
+                    {item.id === selectedAccountId && <Check size={15} />}
+                  </button>
+                  <button className="icloud-scope-settings" type="button"
+                    onClick={() => { setOpen(false); onAccountSettings(item) }}
+                    aria-label={t('设置 iCloud 账号：{name}', { name: item.name })}
+                    data-tooltip={t('账号设置')}>
+                    <Settings2 size={15} aria-hidden="true" />
+                  </button>
+                </div>
+              ))}
+            </section>
+            <section>
+              <h3>{t('收件地址')}</h3>
+              <button className={`icloud-scope-option${!selectedAlias ? ' is-selected' : ''}`} type="button"
+                onClick={() => { onAliasChange(''); close() }}>
+                <span className="icloud-scope-icon"><Inbox size={16} /></span>
+                <span><strong>{t('全部邮件')}</strong><small>{t('所有收件地址')}</small></span>
+                {!selectedAlias && <Check size={15} />}
+              </button>
+              {aliases.map((alias) => (
+                <div className={`icloud-scope-alias${alias.email === selectedAlias ? ' is-selected' : ''}`}
+                  key={alias.anonymousId || alias.email}>
+                  <button className="icloud-scope-option" type="button"
+                    onClick={() => { onAliasChange(alias.email); close() }}>
+                    <span className="icloud-scope-icon"><AtSign size={16} /></span>
+                    <span><strong>{alias.label || t('未命名地址')}</strong><small>{alias.email}</small></span>
+                    {alias.email === selectedAlias && <Check size={15} />}
+                  </button>
+                  <button className="icloud-scope-copy" type="button"
+                    onClick={() => void onAliasCopy(alias.email)}
+                    aria-label={t('复制邮箱地址：{address}', { address: alias.email })}
+                    data-tooltip={t('复制')}>
+                    <Copy size={15} aria-hidden="true" />
+                  </button>
+                </div>
+              ))}
+            </section>
+          </div>
+        </div>
+      </>}
+    </div>
+  )
+}

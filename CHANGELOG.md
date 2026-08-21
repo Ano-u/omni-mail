@@ -1,0 +1,289 @@
+# 更新日志
+
+本文件保留聚合版本历史。GitHub Release 使用
+[`docs/releases`](./docs/releases/README.md) 中与 Tag 同名的独立 Markdown 文件。
+后续 Web、OmniMail Float 与 Android 分别使用 `vX.Y.Z`、`float-vX.Y.Z` 和
+`android-vX.Y.Z`，三套版本号互不影响；以下既有历史记录保持不变。
+
+## [0.3.3] - 2026-08-20
+
+### 新增
+
+- iCloud 账号列表增加独立设置入口，支持修改备注名称、更新 Cookie 和应用专用密码；
+  新增归属校验、审计日志和对应 API。
+- 创建隐藏邮箱前可预览并更换 Apple 候选地址；支持一次创建最多 5 个、独立标签以及
+  部分失败后保留剩余项目继续处理。
+- 新增按 9 个业务分类生成的完整 Markdown API 参考，以及 `npm run docs:api` 和 Catalog
+  元数据指纹同步测试。
+
+### 改进
+
+- 五地址批量创建在桌面端使用两列紧凑卡片，移动端自动单列；操作按钮补齐触控尺寸、
+  加载状态、悬浮说明和无障碍名称。
+- iCloud 凭据保存成功反馈改为固定 toast；邮件发件人可识别 Hide My Email 中继地址，
+  不再直接显示冗长编码。
+- 侧栏头尾固定、中间菜单独立滚动，滚动条与邮件列表保持一致；iCloud 入口移动到
+  垃圾箱之后，并支持移动端直接访问。
+- 系统更新改为引导管理员同步 GitHub Fork，不再由应用直接触发 Cloudflare 构建。
+
+### 安全与兼容
+
+- 候选地址与不透明 `previewId` 成对验证，保持 Apple `generate` / `reserve` 客户端身份
+  连续性；无效候选不会请求 Apple。
+- Cookie 和应用专用密码继续在 Worker 内加密保存，查询接口不会回传原值。
+- 无需新增 D1 迁移、Worker 变量、Secret 或资源绑定。
+
+### 测试
+
+- 完成 364 项单元测试、8 项 Worker 集成测试和 54 项 Playwright E2E。
+- API 文档逐项覆盖 102 个真实端点，并验证路由、说明、参数、响应和示例元数据。
+
+### 发布
+
+- Web 版本为 `0.3.3`；OmniMail Float 与 Android 保持各自独立版本。
+
+## [0.3.2] - 2026-08-18
+
+### 改进
+
+- iCloud 隐藏邮箱用途标签改为可选；支持自动生成以及购物、社交、订阅、工作、临时
+  使用等快捷标签，选择后仍可手动修改。
+- iCloud 凭据管理中的删除账号操作改为清晰的危险按钮样式，补齐亮色、暗色、悬停和
+  键盘焦点状态。
+
+### 修复
+
+- 登录后的工作区锁定根页面滚动，修复完整 API 页面滚到底后整个应用可被卷出视口并
+  出现大面积空白的问题；API、管理页面和移动端继续使用各自的内部滚动。
+
+### 测试
+
+- 新增完整 API 页面外层滚动回归测试，验证 102 个接口仍在内部容器中滚动。
+- 覆盖 iCloud 自动标签、快捷标签、自定义标签和危险按钮样式，并完成 53 项全量 E2E。
+
+### 升级说明
+
+- 无需新增 D1 迁移、Worker 变量或 Secret，正常重新部署即可。
+
+### 发布
+
+- Web 版本为 `0.3.2`；OmniMail Float 与 Android 保持各自独立版本。
+
+## [0.3.1] - 2026-08-18
+
+### 新增
+
+- 在登录后的 Webmail 中新增 `/settings/api` API 使用工作区，提供当前实例地址、
+  Bearer Token 获取与轮换流程，以及 cURL、JavaScript、Python、n8n 和 Postman 示例。
+- 按 Worker 路由源码完整记录 102 个 HTTP API；支持按模块、路径、方法、用途和参数
+  搜索，并为每个接口展示权限、请求、响应、限制和可复制 cURL 示例。
+
+### 改进
+
+- iCloud 隐藏邮箱范围选择器为每个地址增加独立快捷复制按钮，复制时不会切换地址或
+  关闭选择弹层。
+- 创建新的 iCloud 隐藏邮箱后自动切换到该地址，并立即加载对应收件箱。
+- 完整 API 目录独立按需加载，不增加其他管理页面的首次打开体积。
+
+### 修复
+
+- 兼容 Apple Hide My Email `generate` 接口当前的扁平 `result.hme` 响应，同时保留
+  对旧嵌套响应的支持，修复创建地址时报“iCloud 响应中没有隐藏邮箱地址”。
+
+### 测试
+
+- API 目录测试会从主路由和子路由源码提取端点，确保 102 个接口无缺失、重复或多余。
+- 增加 iCloud 扁平响应、创建后自动切换和范围选择器快捷复制的单元及端到端覆盖。
+
+### 升级说明
+
+- 无需新增 D1 迁移、Worker 变量或 Secret，正常重新部署即可。
+
+### 发布
+
+- Web 版本为 `0.3.1`；OmniMail Float 与 Android 保持各自独立版本。
+
+## [0.3.0] - 2026-08-17
+
+### 新增
+
+- 将 OmniIMail 的 iCloud+ Hide My Email 能力融合为 OmniMail 的独立 `/icloud`
+  工作区，共用现有登录、用户权限、主题、语言与响应式导航。
+- 支持连接 `icloud.com` / `icloud.com.cn` 账号，同步、创建、停用、恢复和删除隐藏
+  邮箱地址。
+- 支持应用专用密码验证、iCloud IMAP 最近来信与完整正文读取；全部邮件视图在 IMAP
+  不可用时回退到 iCloud Web 摘要。
+- 新增 `ICLOUD_CREDENTIALS_KEY`，使用带用户、账号和字段上下文的 AES-GCM 加密
+  iCloud Cookie 与应用专用密码；API 永不回传凭据。
+- 新增 D1 迁移 `0021_icloud_accounts.sql`、iCloud API、部署自检项，以及 Node / workerd
+  的加密、解析、迁移、用户隔离和 Scope 回归测试。
+
+### 说明
+
+- iCloud 邮件按需从 Apple 读取，不复制到 OmniMail 的 D1、R2 或现有收件箱。
+- OmniMail Float 的受限设备令牌默认不能访问 iCloud 凭据与接口。
+- Web 版本为 `0.3.0`；OmniMail Float 保持独立版本，不包含 iCloud 管理接口。
+
+### 优化
+
+- Worker 可按顺序补齐 `0020` / `0021` 并写回 Wrangler 迁移记录，避免旧实例因漏跑
+  D1 迁移持续返回 `500`；部署前仍会正常执行 `npm run db:migrate`。
+- iCloud HTTP 与 IMAP 请求增加明确超时和安全重试边界；别名写操作不再因不确定的
+  网络失败自动重放，操作后的地址统计以 Apple 返回列表为准。
+- 账号列表不再解密 Cookie 或应用专用密码，并限制 Cookie 数量、单值大小、总大小及
+  非法头部字符。
+- 切换账号、地址或邮件时会取消失效请求；iCloud 弹窗支持进退场过渡、Escape、焦点
+  循环和焦点恢复，复制地址会显示成功或失败反馈。
+- 将 iCloud 工作区重构为与 OmniMail 收件箱一致的邮件列表与常驻阅读区；账号、隐藏地址
+  范围和管理操作集中到列表栏，并明确区分 Cookie Web 摘要与 IMAP 完整模式。
+- iCloud IMAP 完整邮件保留 HTML 正文并使用沙箱与 CSP 安全渲染；纯文本链接也会经过
+  OmniMail 外链确认，不再把所有邮件降级成不可点击的灰色文本块。
+- iCloud 邮件远程图片遵循系统开关并通过同源代理加载，避免向发件方暴露浏览器网络信息；
+  列表栏图标操作补齐与主收件箱一致的悬浮说明。
+
+## [0.2.5] - 2026-08-15
+
+### 新增
+
+- 新增完整的邮箱地址管理：普通邮箱可以启用、停用、设为主邮箱或经二次确认后删除。
+- 删除邮箱时先立即隐藏地址，再由 Cloudflare Workflow 分批永久清理对应邮件、草稿、
+  附件和主存储对象；主邮箱不能删除，清理任务启动失败时会恢复原状态。
+- 快速生成邮箱支持输入自定义前缀；管理员可以配置随机邮箱固定前缀，网页应用和
+  OmniMail Float 会共享该设置。
+
+### 改进
+
+- 随机邮箱地址统一使用 12 位十六进制随机字符；固定前缀默认留空，不再强制使用
+  `omni-`，可在系统设置中配置最多 20 个字符的前缀。
+- 新增版本化发布说明目录与模板，GitHub Release 会直接使用与 Tag 同名的 Markdown
+  文件，缺失或空文件会阻止发布。
+
+### 测试
+
+- 新增邮箱主地址切换、删除与异步清理、随机前缀配置和地址格式校验的单元测试。
+- 新增自定义邮箱创建、设为主邮箱与删除旧地址的端到端测试，并更新扩展 smoke 测试。
+
+### 升级说明
+
+- 无需新增 D1 迁移、环境变量或 Secret；部署仍需现有 `CLEANUP_WORKFLOW` 绑定。
+
+### 发布
+
+- 网页应用与 OmniMail Float 扩展版本统一为 `0.2.5`，GitHub Release 包含扩展 ZIP。
+
+## [0.2.4] - 2026-08-14
+
+### 新增
+
+- 内置 Chrome Web Store 正式版 OmniMail Float 的固定扩展 ID，主管理员可在
+  **系统设置 → 官方浏览器扩展** 中直接开启或关闭，无需配置 `APP_ORIGINS`。
+- 新增全局扩展开关 API 与中英文设置卡片；开发版和其他扩展 ID 仍可继续通过
+  `APP_ORIGINS` 精确配置。
+
+### 安全
+
+- 官方扩展默认关闭；关闭时同时拒绝固定来源的 CORS、授权码签发、授权码兑换和
+  后续 API 请求。
+- 即使固定商店来源被重复写入 `APP_ORIGINS`，也不能绕过主管理员的全局开关。
+
+### 测试
+
+- 新增官方扩展来源、授权流程、公开配置及主管理员权限的回归测试。
+- 完整单元测试、Worker 类型检查、前端生产构建及发布门禁均覆盖该功能。
+
+### 发布
+
+- 网页应用版本升级为 `0.2.4`；Chrome Web Store 的 OmniMail Float 保持
+  `0.2.1`，本次不发布新的扩展包。
+
+## [0.2.3] - 2026-08-14
+
+### 修复
+
+- 修复 `v0.1.0` 至 `v0.1.4` 使用运行时建库、没有 Wrangler
+  `d1_migrations` 表时，直接升级会因查询迁移记录失败而返回 `500` 的问题。
+- Worker 会根据已知的旧版 `schema_version` 创建 Wrangler 兼容的迁移记录，按顺序
+  补齐 `0015` 至 `0020`；此前迁移失败留下空记录表的数据库也可以继续恢复。
+- `npm run db:migrate` 会先安全引导已知旧库的 Wrangler 迁移基线，修复手动部署在
+  新 Worker 上线前就从 `0001` 开始执行并发生表冲突的问题；远程迁移改用 D1 文件
+  导入通道，兼容包含 SQLite Trigger 的迁移文件。
+- 无法识别的数据库结构不会被猜测性标记为已迁移，仍会返回明确的迁移提示。
+
+### 测试
+
+- 新增三条旧版结构基线、空迁移表及并发迁移的单元回归测试。
+- Worker 集成测试现在会实际删除 `d1_migrations`，验证旧库恢复后可再次交由
+  Wrangler 检查且不会重复执行迁移。
+
+### 发布
+
+- 网页应用与 OmniMail Float 扩展版本统一为 `0.2.3`。
+
+## [0.2.2] - 2026-08-13
+
+### 修复
+
+- 修复通过 Cloudflare Builds 更新时可能绕过 D1 迁移、导致新版 Worker 因缺少
+  `0020_device_token_scopes.sql` 而返回 `500` 的问题；Worker 会安全补齐并登记该迁移。
+
+### 安全
+
+- 为设备会话增加持久化 Scope；现有桌面令牌保持完整权限，OmniMail Float 新令牌仅
+  能读取域名与邮箱、创建邮箱、读取邮件及标记已读，访问管理、发信、删除和账户
+  设置接口时返回 `403`。
+- Refresh Token 轮换会继承原会话 Scope，不能通过刷新扩大权限；设备列表与令牌
+  响应会返回当前 Scope。
+- 服务端强制 `SETUP_TOKEN` 至少为 32 个 UTF-8 字节，并对首次初始化实行每 IP 与
+  全局 15 分钟限速，超限返回 `429` 和 `Retry-After`。
+- 初始化完成后，公开的 `/api/config` 不再返回 `SUPER_ADMIN_EMAIL`。
+
+### 测试
+
+- 新增 Cloudflare Workers Vitest 集成测试，在 workerd/Miniflare 中应用全部 D1 迁移，
+  操作真实 D1、R2 与 Queue 绑定，并验证扩展 Scope、令牌刷新及初始化安全边界。
+- CI 新增 `npm run test:worker`，与现有 Node 单测、构建、E2E 和 Wrangler dry-run
+  共同作为发布门禁。
+
+### 发布
+
+- 网页应用与 OmniMail Float 扩展版本统一为 `0.2.2`。
+
+## [0.2.1] - 2026-08-13
+
+### 新增
+
+- 发布 OmniMail Float 浏览器扩展：支持在普通网页悬浮生成邮箱、自动填入邮箱输入框、
+  查看收件箱与邮件详情，并接收新邮件通知。
+- 新增网站授权扩展流程，使用 Chrome Identity、一次性授权码与 PKCE S256；设备令牌
+  可撤销，密码和 MFA 始终只在 OmniMail 网站中处理。
+- 新增扩展自定义邮箱、随机邮箱、最近邮件自动刷新、右侧停靠与布局恢复。
+- 新增 Chrome Web Store 隐私声明、商店素材、真实 Chromium smoke 测试及独立发布
+  会话脚本。
+- 新增 Deploy to Cloudflare 配置，覆盖 D1、R2、Queue、Workflow、Workers AI 与静态
+  资源绑定。
+- 新增邮件搜索、消息列表索引和数据库基线迁移，改善大型邮箱的数据查询与升级流程。
+
+### 修复
+
+- 修复 Linux DO 登录后丢失扩展授权页路径与查询参数的问题。
+- 修复扩展令牌刷新遇到临时网络或服务端错误时错误清除登录状态的问题；仅在刷新令牌
+  被明确拒绝时退出登录。
+- 修复快速切换邮箱时较早请求覆盖当前邮件列表的竞态问题。
+- 修复扩展 smoke 测试默认覆盖 Chrome Web Store 正式图片素材的问题。
+- 加强扩展来源校验、授权回调验证、会话过期处理和邮件 HTML 隔离。
+
+### 发布
+
+- 网页应用与 OmniMail Float 扩展版本统一为 `0.2.1`。
+- Chrome Web Store 条目 `fpeecjailboemocpmpcbjaghpkpcaihf` 已提交 `0.2.1` 审核，
+  审核通过后自动公开发布。
+
+[0.2.1]: https://github.com/mibgb65-cloud/OmniMail/releases/tag/v0.2.1
+[0.2.2]: https://github.com/mibgb65-cloud/OmniMail/releases/tag/v0.2.2
+[0.2.3]: https://github.com/mibgb65-cloud/OmniMail/releases/tag/v0.2.3
+[0.2.4]: https://github.com/mibgb65-cloud/OmniMail/releases/tag/v0.2.4
+[0.2.5]: https://github.com/mibgb65-cloud/OmniMail/releases/tag/v0.2.5
+[0.3.0]: https://github.com/mibgb65-cloud/OmniMail/releases/tag/v0.3.0
+[0.3.1]: https://github.com/mibgb65-cloud/OmniMail/releases/tag/v0.3.1
+[0.3.2]: https://github.com/mibgb65-cloud/OmniMail/releases/tag/v0.3.2
+[0.3.3]: https://github.com/mibgb65-cloud/OmniMail/releases/tag/v0.3.3
