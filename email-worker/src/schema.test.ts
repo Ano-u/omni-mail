@@ -187,6 +187,17 @@ describe('D1 migration check', () => {
     expect(fixture.batch).toHaveBeenCalledOnce()
   })
 
+  it('keeps the recoverable counter trigger aligned with migration 0022', async () => {
+    const fixture = database({ applied: FINAL_MIGRATIONS.slice(0, -1) })
+
+    await ensureSchema(fixture.db)
+
+    const trigger = fixture.prepare.mock.calls
+      .map(([sql]) => String(sql))
+      .find((sql) => sql.includes('CREATE TRIGGER trg_messages_mail_state_update'))
+    expect(trigger).toContain('AFTER UPDATE OF direction, status, folder')
+  })
+
   it('drops a rejected cached check so the next request can retry', async () => {
     const fixture = database({
       applied: FINAL_MIGRATIONS.slice(0, -1),

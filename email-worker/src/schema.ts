@@ -301,7 +301,7 @@ const RECOVERABLE_MIGRATIONS = [
        END`,
       'DROP TRIGGER IF EXISTS trg_messages_mail_state_update',
       `CREATE TRIGGER trg_messages_mail_state_update
-       AFTER UPDATE OF status, folder, sender_name, sender_address, subject, preview,
+       AFTER UPDATE OF direction, status, folder, sender_name, sender_address, subject, preview,
          received_at, sent_at, attachment_count, is_read, is_starred, processing_error,
          delivery_status
        ON messages BEGIN
