@@ -60,7 +60,7 @@ describe('message sync version', () => {
     expect(summary.mailboxAddress).toBe('unknown@example.com')
   })
 
-  it('batches the message page and folder counts in one D1 call', async () => {
+  it('batches the message page and cached folder counts in one D1 call', async () => {
     const statements: Array<{ sql: string; values: unknown[] }> = []
     const batch = vi.fn(async () => [
       { results: [{
@@ -104,6 +104,10 @@ describe('message sync version', () => {
     expect(batch).toHaveBeenCalledOnce()
     expect(batch.mock.calls[0][0]).toHaveLength(2)
     expect(statements.some((statement) => statement.sql.includes('ORDER BY m.sort_at'))).toBe(true)
+    expect(statements.some((statement) => (
+      statement.sql.includes('FROM mail_state_versions s')
+    ))).toBe(true)
+    expect(statements.every((statement) => !statement.sql.includes('SUM(CASE'))).toBe(true)
     expect(result).toMatchObject({
       version: 3,
       messages: [{ id: 'message-1' }],

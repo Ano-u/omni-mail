@@ -94,8 +94,9 @@ async function updateOwnedMessages(
   input: BulkMessageInput,
 ): Promise<number> {
   const marks = placeholders(input.ids.length)
-  const scope = `id IN (${marks}) AND mailbox_address IN (
-    SELECT address FROM mailboxes WHERE user_id = ?
+  const scope = `id IN (${marks}) AND EXISTS (
+    SELECT 1 FROM mailboxes mb
+     WHERE mb.address = messages.mailbox_address AND mb.user_id = ?
   )`
   let sql = ''
   let leadingBindings: Array<string | number> = []

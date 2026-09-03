@@ -165,17 +165,28 @@ export async function listMessages(
      ORDER BY m.sort_at DESC, m.id DESC
      LIMIT ?`,
   ).bind(...bindings, pagination.limit + 1)
-  const countsStatement = env.DB.prepare(
-    `SELECT
-       SUM(CASE WHEN m.direction = 'incoming' AND m.folder = 'inbox' AND m.is_read = 0 THEN 1 ELSE 0 END) AS unread,
-       SUM(CASE WHEN m.is_starred = 1 AND m.folder != 'trash' THEN 1 ELSE 0 END) AS starred,
-       SUM(CASE WHEN m.direction = 'outgoing' AND m.folder = 'sent' THEN 1 ELSE 0 END) AS sent,
-       SUM(CASE WHEN m.folder = 'trash' THEN 1 ELSE 0 END) AS trash,
-       (SELECT COUNT(*) FROM mail_drafts d WHERE d.user_id = ?) AS drafts
-     FROM messages m
-     JOIN mailboxes mb ON mb.address = m.mailbox_address
-     WHERE ${scopeConditions.join(' AND ')}`,
-  ).bind(user.id, ...scopeBindings)
+  const countsStatement = mailbox || domain
+    ? env.DB.prepare(
+      `SELECT
+         SUM(CASE WHEN m.direction = 'incoming' AND m.folder = 'inbox' AND m.is_read = 0 THEN 1 ELSE 0 END) AS unread,
+         SUM(CASE WHEN m.is_starred = 1 AND m.folder != 'trash' THEN 1 ELSE 0 END) AS starred,
+         SUM(CASE WHEN m.direction = 'outgoing' AND m.folder = 'sent' THEN 1 ELSE 0 END) AS sent,
+         SUM(CASE WHEN m.folder = 'trash' THEN 1 ELSE 0 END) AS trash,
+         (SELECT COUNT(*) FROM mail_drafts d WHERE d.user_id = ?) AS drafts
+       FROM messages m
+       JOIN mailboxes mb ON mb.address = m.mailbox_address
+       WHERE ${scopeConditions.join(' AND ')}`,
+    ).bind(user.id, ...scopeBindings)
+    : env.DB.prepare(
+      `SELECT
+         s.unread_count AS unread,
+         s.starred_count AS starred,
+         s.sent_count AS sent,
+         s.trash_count AS trash,
+         (SELECT COUNT(*) FROM mail_drafts d WHERE d.user_id = ?) AS drafts
+       FROM mail_state_versions s
+       WHERE s.user_id = ?`,
+    ).bind(user.id, user.id)
   const [messagesResult, countsResult] = await env.DB.batch<SummaryRow | CountsRow>([
     messagesStatement,
     countsStatement,
