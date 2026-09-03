@@ -94,6 +94,7 @@ const FINAL_MIGRATIONS = [
   '0020_device_token_scopes.sql',
   '0021_icloud_accounts.sql',
   '0022_d1_read_efficiency.sql',
+  '0023_fix_message_counter_trigger.sql',
 ]
 
 describe('D1 migration check', () => {
@@ -111,10 +112,10 @@ describe('D1 migration check', () => {
   })
 
   it.each([
-    ['2026-07-29-p5-outbound-rate-limit-admin', 14, 9],
-    ['2026-08-01-p2-translation-permissions', 16, 7],
-    ['2026-08-03-p3-multiple-drafts', 17, 6],
-  ])('recovers legacy schema %s through migration 0022', async (
+    ['2026-07-29-p5-outbound-rate-limit-admin', 14, 10],
+    ['2026-08-01-p2-translation-permissions', 16, 8],
+    ['2026-08-03-p3-multiple-drafts', 17, 7],
+  ])('recovers legacy schema %s through migration 0023', async (
     legacyVersion,
     baseline,
     batchCount,
@@ -124,10 +125,11 @@ describe('D1 migration check', () => {
 
     expect(fixture.batch).toHaveBeenCalledTimes(batchCount)
     expect(fixture.batches[0]).toHaveLength(baseline + 1)
-    expect(fixture.applied.size).toBe(22)
+    expect(fixture.applied.size).toBe(23)
     expect(fixture.applied.has('0020_device_token_scopes.sql')).toBe(true)
     expect(fixture.applied.has('0021_icloud_accounts.sql')).toBe(true)
     expect(fixture.applied.has('0022_d1_read_efficiency.sql')).toBe(true)
+    expect(fixture.applied.has('0023_fix_message_counter_trigger.sql')).toBe(true)
     expect(fixture.prepare).toHaveBeenCalledWith(
       "ALTER TABLE device_sessions ADD COLUMN scopes TEXT NOT NULL DEFAULT '*'",
     )
@@ -144,7 +146,7 @@ describe('D1 migration check', () => {
 
     await ensureSchema(fixture.db)
 
-    expect(fixture.applied.size).toBe(22)
+    expect(fixture.applied.size).toBe(23)
     expect(fixture.batches[0]).toHaveLength(18)
   })
 
@@ -162,7 +164,7 @@ describe('D1 migration check', () => {
 
   it('records an existing scopes column before applying the iCloud migration', async () => {
     const fixture = database({
-      applied: FINAL_MIGRATIONS.slice(0, -3),
+      applied: FINAL_MIGRATIONS.slice(0, -4),
       scopesPresent: true,
     })
 
@@ -171,20 +173,32 @@ describe('D1 migration check', () => {
     expect(fixture.applied.has('0020_device_token_scopes.sql')).toBe(true)
     expect(fixture.applied.has('0021_icloud_accounts.sql')).toBe(true)
     expect(fixture.applied.has('0022_d1_read_efficiency.sql')).toBe(true)
+    expect(fixture.applied.has('0023_fix_message_counter_trigger.sql')).toBe(true)
     expect(fixture.prepare).not.toHaveBeenCalledWith(
       "ALTER TABLE device_sessions ADD COLUMN scopes TEXT NOT NULL DEFAULT '*'",
     )
-    expect(fixture.batch).toHaveBeenCalledTimes(2)
+    expect(fixture.batch).toHaveBeenCalledTimes(3)
   })
 
   it('accepts a concurrent migration completed by another isolate', async () => {
     const fixture = database({
       applied: FINAL_MIGRATIONS.slice(0, -1),
-      concurrentMigration: '0022_d1_read_efficiency.sql',
+      concurrentMigration: '0023_fix_message_counter_trigger.sql',
     })
 
     await expect(ensureSchema(fixture.db)).resolves.toBeUndefined()
     expect(fixture.batch).toHaveBeenCalledOnce()
+  })
+
+  it('keeps the latest recoverable counter trigger sensitive to direction changes', async () => {
+    const fixture = database({ applied: FINAL_MIGRATIONS.slice(0, -1) })
+
+    await ensureSchema(fixture.db)
+
+    const trigger = fixture.prepare.mock.calls
+      .map(([sql]) => String(sql))
+      .find((sql) => sql.includes('CREATE TRIGGER trg_messages_mail_state_update'))
+    expect(trigger).toContain('AFTER UPDATE OF direction, status, folder')
   })
 
   it('drops a rejected cached check so the next request can retry', async () => {
@@ -193,7 +207,7 @@ describe('D1 migration check', () => {
       failBatchOnce: true,
     })
 
-    await expect(ensureSchema(fixture.db)).rejects.toThrow('0022_d1_read_efficiency.sql')
+    await expect(ensureSchema(fixture.db)).rejects.toThrow('0023_fix_message_counter_trigger.sql')
     await expect(ensureSchema(fixture.db)).resolves.toBeUndefined()
     expect(fixture.batch).toHaveBeenCalledTimes(2)
   })
